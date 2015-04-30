@@ -121,8 +121,13 @@ class enrol_autoenrol_plugin extends enrol_plugin {
             $opted_out_instances = $DB->get_records('enrol_autoenrol', array('userid' => $USER->id), null, '*');
             foreach($opted_out_instances as $opted_out_instance){
                 if($opted_out_instance->instanceid == $instance->id){
+                    //user has opted out before so auto enrol them
                     $this->enrol_user($instance, $USER->id, $instance->customint3, time(), 0);
                     $this->process_group($instance, $USER);
+
+                    //remove the opt-out row in enrol_autoenrol
+                    $DB->delete_records('enrol_autoenrol', array('userid'=>$USER->id, 'instanceid'=>$instance->id));
+
                     return 9999999999;
                 }
             }
