@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="enrol/autoenrol/db" VERSION="20150430" COMMENT="XMLDB file for Moodle enrol/autoenrol">
+    <TABLES>
+        <TABLE NAME="enrol_autoenrol" COMMENT="holds the records of enrollments users have opted out of">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="userid" />
+                <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" PREV="id" NEXT="instanceid" />
+                <FIELD NAME="instanceid" TYPE="int" LENGTH="10" NOTNULL="true" PREV="userid" NEXT="timestamp" />
+                <FIELD NAME="timestamp" TYPE="int" LENGTH="10" NOTNULL="true" PREV="instanceid" />
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+            </KEYS>
+        </TABLE>
+    </TABLES>
+</XMLDB>

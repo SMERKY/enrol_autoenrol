@@ -84,13 +84,13 @@ class enrol_autoenrol_plugin extends enrol_plugin {
      *
      * @return moodle_url or NULL if self unenrolment not supported
      */
-    public function get_unenrolself_link($instance) {
-        if ($instance->customint1 > 0) {
-            // Don't offer unenrolself if we are going to re-enrol them on login.
-            return null;
-        }
-        return parent::get_unenrolself_link($instance);
-    }
+    // public function get_unenrolself_link($instance) {
+    //     // if ($instance->customint1 > 0) {
+    //     //     // Don't offer unenrolself if we are going to re-enrol them on login.
+    //     //     return null;
+    //     // }
+    //     return parent::get_unenrolself_link($instance);
+    // }
 
 
     /**
@@ -105,14 +105,27 @@ class enrol_autoenrol_plugin extends enrol_plugin {
      * @throws coding_exception
      */
     public function try_autoenrol(stdClass $instance) {
-        global $USER;
+        global $USER, $DB;
         if ($instance->enrol !== 'autoenrol') {
             throw new coding_exception('Invalid enrol instance type!');
         }
-        if ($instance->customint1 == 0 && $this->enrol_allowed($USER, $instance)) {
-            $this->enrol_user($instance, $USER->id, $instance->customint3, time(), 0);
-            $this->process_group($instance, $USER);
-            return 9999999999;
+        //if this instance is set to enrol on access
+        if ($instance->customint1 == 0){
+            if($this->enrol_allowed($USER, $instance)) {
+                $this->enrol_user($instance, $USER->id, $instance->customint3, time(), 0);
+                $this->process_group($instance, $USER);
+                return 9999999999;
+            }
+        }else{
+            //plugin is set to enrol on login, so lets check if they have opted out
+            $opted_out_instances = $DB->get_records('enrol_autoenrol', array('userid' => $USER->id), null, '*');
+            foreach($opted_out_instances as $opted_out_instance){
+                if($opted_out_instance->instanceid == $instance->id){
+                    $this->enrol_user($instance, $USER->id, $instance->customint3, time(), 0);
+                    $this->process_group($instance, $USER);
+                    return 9999999999;
+                }
+            }
         }
         return false;
     }
@@ -311,20 +324,33 @@ class enrol_autoenrol_plugin extends enrol_plugin {
         $instances = $DB->get_records('enrol', array('enrol' => 'autoenrol', 'customint1' => 1), null, '*');
         // Now get a record of all of the users enrolments.
         $user_enrolments = $DB->get_records('user_enrolments', array('userid' => $user->id), null, '*');
+        // Get all the $instances this user has opted out of to check against
+        $opted_out_instances = $DB->get_records('enrol_autoenrol', array('userid' => $user->id), null, '*');
         // Run throuch all of the autoenrolment instances and check that the user has been enrolled.
         foreach ($instances as $instance) {
             $found = false;
-            foreach ($user_enrolments as $user_enrolment) {
-                if ($user_enrolment->enrolid == $instance->id) {
+
+            //check if this instance has been opted out of
+            foreach ($opted_out_instances as $opted_out_instance) {
+                if ($opted_out_instance->instanceid == $instance->id) {
                     $found = true;
+                    break; //end the foreach
                 }
             }
 
-            if (!$found && $this->enrol_allowed($user, $instance)) {
-                $this->enrol_user($instance, $user->id, $instance->customint3, time(), 0);
-                $this->process_group($instance, $user);
-            }
+            if (!$found) {
+                foreach ($user_enrolments as $user_enrolment) {
+                    if ($user_enrolment->enrolid == $instance->id) {
+                        $found = true;
+                        break; //end the foreach
+                    }
+                }
 
+                if (!$found && $this->enrol_allowed($user, $instance)) {
+                    $this->enrol_user($instance, $user->id, $instance->customint3, time(), 0);
+                    $this->process_group($instance, $user);
+                }
+            }
         }
     }
 

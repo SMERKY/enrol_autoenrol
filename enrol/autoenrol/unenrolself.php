@@ -52,7 +52,23 @@ $PAGE->set_url('/enrol/autoenrol/unenrolself.php', array('enrolid' => $instance-
 $PAGE->set_title($plugin->get_instance_name($instance));
 
 if ($confirm and confirm_sesskey()) {
+    //unenroll the user
     $plugin->unenrol_user($instance, $USER->id);
+
+    //if this instance is enrollment on login
+    if($instance->customint1 > 0){
+    	//add the opt out row
+    	$opted_out_row = new stdClass();
+    	$opted_out_row->userid = $USER->id;
+    	$opted_out_row->instanceid = $instance->id;
+    	$opted_out_row->timestamp = time();
+    	$row_id = $DB->insert_record('enrol_autoenrol', $opted_out_row, $returnid=true, $bulk=false);
+
+    	if($row_id == false){
+    		throw new coding_exception('Cannot opt out of course');
+    	}
+    }
+
     redirect(new moodle_url('/index.php'));
 }
 

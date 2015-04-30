@@ -17,6 +17,10 @@ relating to the plugin which should be reviewed through Moodle's "Define Roles" 
 
 ## Changelog
 
+* v1.4.0
+  * Gives the option to for learners to unenrol themselves from a 'processed on login' course
+  * When users unenrol themselves from a 'processed on login' course, they will be re-enrolled when they try to access it next
+  * Table stores a log of users that have opted out of the course 
 * v1.3.1
   * Tweaks to the Readme to improve readability and installation instructions.
   * Added new capability to control whether user can enable or disable instances.
